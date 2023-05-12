@@ -124,23 +124,22 @@ const raycaster = new THREE.Raycaster()
 
 
 const createFlower = function(position){
-
+console.log("CREATEFLOWER")
+console.log(position)
   let flowerMesh;
   
   flowerMesh = SkeletonUtils.clone(mainFlowerMesh)
-  flowerMesh.scale.set(.3,.3,.3)
-  flowerMesh.position.setFromMatrixPosition(reticle.matrix);
-    // newFlower.quaternion.setFromRotationMatrix(reticle.matrix);
-    // console.log(reticle)
-    // if( reticle.quaternion.z > Math.PI*.1 || reticle.quaternion.x>Math.PI*.1 ){
+  console.log(flowerMesh)
+  flowerMesh.scale.set(.03,.03,.03)
+  flowerMesh.position.x=position.x;
+    flowerMesh.position.y=position.y;
+      flowerMesh.position.z=position.z;
+  
 
-      treeMesh.position.y = 1
-
-
-    scene.add(flowerMesh)
+   scene.add(flowerMesh)
     flowers.push(flowerMesh)
       
-    gsap.to( flowerMesh.scale,{duration:.3,y:5 ,x:5, z:5})
+    // gsap.to( flowerMesh.scale,{duration:.3,y:5 ,x:5, z:5})
 
 }
 let hornIntersect
@@ -159,8 +158,9 @@ function animate() {
   hornIntersect = raycaster.intersectObject(horns);
   // console.log(hornIntersect)
     if(hornIntersect.length>0){
-      console.log("intersect")
-      console.log(hornIntersect)
+      // console.log("intersect")
+      // console.log(hornIntersect[0].point)
+      createFlower(hornIntersect[0].point)
       horns.material=randomMaterial2
     }
   }
