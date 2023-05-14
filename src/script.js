@@ -28,6 +28,27 @@ setInterval(() => {
 let pedalCount = 0
 let pedal1
 let pedal2
+let arch
+let DotCount 
+let addAnimationTrigger = "off"
+
+loader.load("arch.glb", function(glb){
+  arch = glb.scene;
+  console.log("arch")
+  console.log(arch)
+  arch.scale.set(.7,.7,.7)
+  arch.rotation.x = Math.PI*0.5
+  arch.position.z = -.1
+  scene.add(arch)
+
+  DotCount = arch.children[0].geometry.getAttribute('position')
+  console.log(DotCount.count)
+
+})
+
+    // let vertex = new THREE.Vector3();
+    // vertex.fromBufferAttribute( DotCount, randomLeaf );
+    // leaveMass.localToWorld( vertex );
 
 loader.load("pedal1.glb", function(glb){
   pedal1 = glb.scene;
@@ -39,7 +60,36 @@ loader.load("pedal2.glb", function(glb){
 
 })
 
+const deleteFlowers = function(){
+let count = flowers.length;
 
+for(let i=0; i<flowers.length; i++){
+  setTimeout(() => {
+    scene.remove(flowers[i])
+    // flowers.shift()
+    if(DotCount!==null&&arch!==null&&i<DotCount.count){
+    let vertex = new THREE.Vector3();
+    vertex.fromBufferAttribute( DotCount, i);
+    arch. localToWorld( vertex );
+    console.log("vertex " + vertex)
+    createArchPetal(.01, vertex)
+    count --
+    if(count<=0){
+      flowers = []
+
+    }
+    
+  }
+
+
+  }, 10*i);
+
+}
+
+
+
+
+}
 
 const createPetal = (radius, position) =>
 {
@@ -72,6 +122,14 @@ const createPetal = (radius, position) =>
     body.position.copy(position)
     // body.applyForce(new CANNON.Vec3(0, 0, -10), body.position)
     body.applyLocalForce(new CANNON.Vec3(.1, -.5, 0), body.position)
+    world.gravity.x = .5;
+   world.gravity.z = .5;
+
+    setTimeout(() => {
+      world.gravity.x = 0
+      world.gravity.z = 0
+
+    }, 1000);
 
     // body.addEventListener('collide', playHitSound)
 
@@ -81,6 +139,59 @@ const createPetal = (radius, position) =>
     // Save in objects
     objectsToUpdate.push({ petalMesh, body })
     console.log(objectsToUpdate);
+}
+
+
+//create arch petals
+
+const createArchPetal = (radius, position) =>
+{
+      let petalMesh;
+      var rand = Math.floor(Math.random()*2)
+      if(rand==1){
+         petalMesh = pedal1.clone()
+      }
+      else{
+        petalMesh = pedal2.clone()
+      }
+
+      
+    petalMesh.scale.set(radius, radius, radius)
+    // mesh.rotation.y=Math.PI*.5
+    petalMesh.position.copy(position)
+    scene.add(petalMesh)
+
+    // Cannon.js body
+    const shape = new CANNON.Box(new CANNON.Vec3(.02,.001,.04))
+
+    const body = new CANNON.Body({
+        mass: 1,
+        position: new CANNON.Vec3(0, 0, 0),
+        shape: shape,
+        material: defaultMaterial
+    })
+    body.position.copy(position)
+    // body.applyForce(new CANNON.Vec3(0, 0, -10), body.position)
+    body.applyLocalForce(new CANNON.Vec3(.1, -.5, 0), body.position)
+    world.gravity.x = .5;
+   world.gravity.z = .5;
+
+    setTimeout(() => {
+      world.gravity.x = 0
+      world.gravity.z = 0
+
+    }, 1000);
+
+    // body.addEventListener('collide', playHitSound)
+    setTimeout(() => {
+     world.addBody(body)
+    body.linearDamping= .8
+
+    // Save in objects
+    objectsToUpdate.push({ petalMesh, body })
+      
+    }, 50);
+
 }
 //deerboy
 let deerboy
@@ -112,7 +223,7 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
 const floorShape = new CANNON.Plane()
 const floorBody = new CANNON.Body()
 floorBody.mass = 0
-floorBody.position=new CANNON.Vec3(0, -.5, 0)
+floorBody.position=new CANNON.Vec3(0, -.55, 0)
 floorBody.addShape(floorShape)
 floorBody.quaternion.setFromAxisAngle(
     new CANNON.Vec3(-1,0,0),
@@ -142,7 +253,7 @@ const objectsToUpdate = []
 // Create the scene, camera and renderer
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(55, sizes.width / sizes.height, 0.1, 1000);
-camera.position.set(0,.5,1.5)
+camera.position.set(0,.5,2.0)
 scene.add(camera)
 const controls = new OrbitControls(camera, canvas)
 // Controls
@@ -157,7 +268,7 @@ const renderer = new THREE.WebGLRenderer({
     canvas: canvas
 })
 
-renderer.setClearColor( 'green',.5);
+renderer.setClearColor( '#fcd303',.5);
 
 // renderer.shadowMap.enabled = true
 // renderer.shadowMap.type = THREE.PCFSoftShadowMap
@@ -181,7 +292,7 @@ let mixer;
 let action;
 let actionRev;
 
-loader.load( 'deerboy2.glb', function ( gltf ) {
+loader.load( 'deerboy.glb', function ( gltf ) {
   console.log(gltf.animations)
   deerboy = gltf.scene;
   deerboy.scale.set(.1,.1,.1)
@@ -194,22 +305,23 @@ loader.load( 'deerboy2.glb', function ( gltf ) {
 
   mixer = new THREE.AnimationMixer(gltf.scene)
   action = mixer.clipAction(gltf.animations[7])
+  // revAction = mixer.clipAction(gltf.animations[8])
+
   // actionRev = mixer.clipAction(gltf.animations[8]) 
         // action.reset()
         // action.weight=1
         // actionRev.weight=0
         //   action.setEffectiveWeight(1)
         // action.clampWhenFinished = true
-        action._interpolantSettings.endingStart=0
+        // action._interpolantSettings.endingStart=0
         action.timeScale=.1
-        action.time = 0 
+        action.time = 0
         action.setLoop( THREE.LoopOnce )
-        // console.log(mixer)
-          console.log(action._interpolantSettings
-);
+        // revAction.timeScale=.1
+        
 
 
-        // action.play()
+
         // action.paused()
 
 }, undefined, function ( error ) {
@@ -224,10 +336,24 @@ loader.load("flower.glb", function(glb){
 window.addEventListener("click",(e)=>{
   e.stopPropagation()
   e.preventDefault()
-  if(action !== null)
+  if(flowers.length>0){
+
+    deleteFlowers()
+  }
+  //turns the animation on and also triggers the blossom array
+  if(action !== null&&addAnimationTrigger=="off")
   {
     action.play();
+    addAnimationTrigger="on";
+    
   }
+  else{
+    // action.pause();
+    addAnimationTrigger="off";
+
+  }
+
+
 
 
 })
@@ -278,23 +404,40 @@ function animate() {
   let oldElapsedTime=null;
   const clock = new THREE.Clock()
   let previousTime = 0
-
 const elapsedTime = clock.getElapsedTime()
 const deltaTime = elapsedTime - oldElapsedTime
 oldElapsedTime = elapsedTime
 //raycaster needs to be refreshed every frame
   raycaster.setFromCamera(mouse, camera)
-      if(mixer)
-    {
-        mixer.update(deltaTime)
-    }
 
 
 
-  requestAnimationFrame( animate );
 
 
   renderer.render( scene, camera );
+
+
+  requestAnimationFrame( animate );
+ 
+
+
+ if(mixer)
+{
+// mixer.update(deltaTime)
+
+        mixer.update(deltaTime)
+          if(action.time<3.3&&addAnimationTrigger=="on"){
+         action.time+=.08
+
+  }
+  else if(action.time>=0&&addAnimationTrigger=="off"){
+    action.time-=.08
+
+  }
+  else{
+    // action.time=0
+  }
+}
 // console.log(mouse)
   if(horns !=null){
   hornIntersect = raycaster.intersectObject(horns);
